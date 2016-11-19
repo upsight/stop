@@ -1,0 +1,13 @@
+# This is a build file for Ron (https://github.com/upsight/ron).
+
+targets:
+  test:
+    description: Run unit tests.
+    before:
+      - vet
+    cmd: |
+      go test .
+  vet:
+    description: Run vet on the package.
+    cmd: |
+      go tool vet *.go
