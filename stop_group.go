@@ -29,9 +29,12 @@ func NewStopGroup() *StopGroup {
 func (s *StopGroup) Add(stopper Stopper) {
 	s.wg.Add(1)
 	go func() {
-		<-s.stop
-		stopper.Stop()
-		stopper.WaitForStopped()
+		select {
+		case <-stopper.StoppedChannel():
+		case <-s.stop:
+			stopper.Stop()
+			stopper.WaitForStopped()
+		}
 		s.wg.Done()
 	}()
 }

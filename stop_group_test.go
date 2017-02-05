@@ -60,6 +60,21 @@ func TestStopGroupAdd(t *testing.T) {
 	assert.Equal(t, 1, ms.waitForStoppedCalls)
 }
 
+func TestStopGroupAddEarlyStop(t *testing.T) {
+	// This test is validating that calling stop on a stopper unblocks the
+	// stop group cleanup goroutine for the stopper.
+	sg := NewStopGroup()
+	ms := NewChannelStopper()
+	sg.Add(ms)
+	ms.Stopped()
+	timer := time.AfterFunc(100*time.Millisecond, func() {
+		t.Error("StopGroup Add() did not unblock after 100ms")
+		close(sg.stop)
+	})
+	sg.wg.Wait()
+	timer.Stop()
+}
+
 func TestStopGroupIsStopping(t *testing.T) {
 	sg := NewStopGroup()
 	assert.False(t, sg.IsStopping())
