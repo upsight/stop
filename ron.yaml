@@ -1,4 +1,6 @@
-# This is a build file for Ron (https://github.com/upsight/ron).
+# This is a build file for Ron (https://github.com/upsight/ron). You can
+# install ron with `go get -u github.com/upsight/ron/cmd/...`, then run
+# commands like `ron target test`.
 
 targets:
   test:
