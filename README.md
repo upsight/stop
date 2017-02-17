@@ -5,4 +5,4 @@ of goroutines (and anything else that implements the Stopper interface).
 
 `go get github.com/upsight/stop`
 
-See the documentation for [an example](https://godoc.org/github.com/upsight/stop#example-StopGroup).
+See the documentation for [an example](https://godoc.org/github.com/upsight/stop#example-Group).

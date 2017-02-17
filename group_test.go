@@ -39,17 +39,24 @@ func (ms *MockStopper) WaitForStopped() {
 	ms.waitForStoppedCalls++
 }
 
-func TestNewStopGroup(t *testing.T) {
-	sg := NewStopGroup()
-	if assert.NotNil(t, sg) {
-		assert.False(t, sg.isStopping)
-		assert.NotNil(t, sg.stop)
-		assert.NotNil(t, sg.wg)
+func TestNewGroup(t *testing.T) {
+	sg := NewGroup()
+	if sg == nil {
+		t.Fatal("sg was unexpectedly nil")
+	}
+	if sg.isStopping {
+		t.Errorf("expected sg.isStopping to be false, got true")
+	}
+	if sg.stop == nil {
+		t.Errorf("sg.stop was unexpectedly nil")
+	}
+	if sg.wg == nil {
+		t.Errorf("sg.wg was unexpectedly nil")
 	}
 }
 
-func TestStopGroupAdd(t *testing.T) {
-	sg := NewStopGroup()
+func TestGroupAdd(t *testing.T) {
+	sg := NewGroup()
 	ms := &MockStopper{}
 	sg.Add(ms)
 	assert.Equal(t, 0, ms.stopCalls)
@@ -60,30 +67,30 @@ func TestStopGroupAdd(t *testing.T) {
 	assert.Equal(t, 1, ms.waitForStoppedCalls)
 }
 
-func TestStopGroupAddEarlyStop(t *testing.T) {
+func TestGroupAddEarlyStop(t *testing.T) {
 	// This test is validating that calling stop on a stopper unblocks the
 	// stop group cleanup goroutine for the stopper.
-	sg := NewStopGroup()
+	sg := NewGroup()
 	ms := NewChannelStopper()
 	sg.Add(ms)
 	ms.Stopped()
 	timer := time.AfterFunc(100*time.Millisecond, func() {
-		t.Error("StopGroup Add() did not unblock after 100ms")
+		t.Error("Group Add() did not unblock after 100ms")
 		close(sg.stop)
 	})
 	sg.wg.Wait()
 	timer.Stop()
 }
 
-func TestStopGroupIsStopping(t *testing.T) {
-	sg := NewStopGroup()
+func TestGroupIsStopping(t *testing.T) {
+	sg := NewGroup()
 	assert.False(t, sg.IsStopping())
 	sg.isStopping = true
 	assert.True(t, sg.IsStopping())
 }
 
-func TestStopGroupStop(t *testing.T) {
-	sg := NewStopGroup()
+func TestGroupStop(t *testing.T) {
+	sg := NewGroup()
 	assert.False(t, sg.isStopping)
 	sg.Stop()
 	assert.True(t, sg.isStopping)
@@ -98,13 +105,13 @@ func TestStopGroupStop(t *testing.T) {
 	sg.Stop()
 }
 
-func TestStopGroupStopChannel(t *testing.T) {
-	sg := NewStopGroup()
+func TestGroupStopChannel(t *testing.T) {
+	sg := NewGroup()
 	assert.Exactly(t, sg.stop, sg.StopChannel())
 }
 
-func TestStopGroupStopOnSignal(t *testing.T) {
-	sg := NewStopGroup()
+func TestGroupStopOnSignal(t *testing.T) {
+	sg := NewGroup()
 	sg.StopOnSignal(syscall.SIGWINCH)
 	syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)
 	select {
@@ -114,9 +121,9 @@ func TestStopGroupStopOnSignal(t *testing.T) {
 	}
 }
 
-func TestStopGroupWait(t *testing.T) {
+func TestGroupWait(t *testing.T) {
 	ch := make(chan bool)
-	sg := NewStopGroup()
+	sg := NewGroup()
 	sg.wg.Add(1)
 	go func() {
 		sg.Wait()

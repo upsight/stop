@@ -3,13 +3,18 @@
 # commands like `ron target test`.
 
 targets:
+  lint:
+    description: Run golint on the package.
+    cmd: |
+      golint .
   test:
     description: Run unit tests.
     before:
+      - lint
       - vet
     cmd: |
-      go test .
+      go test $(go list ./... | grep -v /vendor/)
   vet:
     description: Run vet on the package.
     cmd: |
-      go tool vet *.go
+      go vet $(go list ./... | grep -v /vendor/)

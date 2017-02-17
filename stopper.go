@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-// Stopper is an interface for objects that can be used with StopGroup. See
+// Stopper is an interface for objects that can be used with Group. See
 // ChannelStopper for a simple implementation using channels.
 //
 // IsStopping should return true if Stop has been called.

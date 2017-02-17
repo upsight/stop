@@ -25,13 +25,13 @@ func ExampleChannelStopper() {
 	// Stopper has stopped
 }
 
-func ExampleStopGroup() {
+func ExampleGroup() {
 	type Service struct {
 		*stop.ChannelStopper
 		t *time.Timer
 	}
 
-	runService := func(s *Service, sg *stop.StopGroup, n int) {
+	runService := func(s *Service, sg *stop.Group, n int) {
 		defer s.Stopped()
 		select {
 		case <-s.StopChannel():
@@ -46,7 +46,7 @@ func ExampleStopGroup() {
 	// service will finish first. It will stop the group, which will
 	// cause the stop for the other service to be called.
 
-	sg := stop.NewStopGroup()
+	sg := stop.NewGroup()
 
 	s1 := &Service{
 		ChannelStopper: stop.NewChannelStopper(),
