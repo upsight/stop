@@ -4,8 +4,6 @@ import (
 	"syscall"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 type MockStopper struct {
@@ -59,12 +57,20 @@ func TestGroupAdd(t *testing.T) {
 	sg := NewGroup()
 	ms := &MockStopper{}
 	sg.Add(ms)
-	assert.Equal(t, 0, ms.stopCalls)
-	assert.Equal(t, 0, ms.waitForStoppedCalls)
+	if ms.stopCalls != 0 {
+		t.Errorf("ms.stopCalls = %d; expected 0", ms.stopCalls)
+	}
+	if ms.waitForStoppedCalls != 0 {
+		t.Errorf("ms.waitForStoppedCalls = %d; expected 0", ms.waitForStoppedCalls)
+	}
 	close(sg.stop)
 	sg.wg.Wait()
-	assert.Equal(t, 1, ms.stopCalls)
-	assert.Equal(t, 1, ms.waitForStoppedCalls)
+	if ms.stopCalls != 1 {
+		t.Errorf("ms.stopCalls = %d; expected 1", ms.stopCalls)
+	}
+	if ms.waitForStoppedCalls != 1 {
+		t.Errorf("ms.waitForStoppedCalls = %d; expected 1", ms.waitForStoppedCalls)
+	}
 }
 
 func TestGroupAddEarlyStop(t *testing.T) {
@@ -84,20 +90,28 @@ func TestGroupAddEarlyStop(t *testing.T) {
 
 func TestGroupIsStopping(t *testing.T) {
 	sg := NewGroup()
-	assert.False(t, sg.IsStopping())
+	if sg.IsStopping() {
+		t.Error("sg.IsStopping() is true, expected false")
+	}
 	sg.isStopping = true
-	assert.True(t, sg.IsStopping())
+	if !sg.IsStopping() {
+		t.Error("sg.IsStopping() is false, expected true")
+	}
 }
 
 func TestGroupStop(t *testing.T) {
 	sg := NewGroup()
-	assert.False(t, sg.isStopping)
+	if sg.isStopping {
+		t.Error("sg.isStopping is true, expected false")
+	}
 	sg.Stop()
-	assert.True(t, sg.isStopping)
+	if !sg.isStopping {
+		t.Error("sg.isStopping is false, expected true")
+	}
 	select {
 	case <-sg.stop:
 	case <-time.After(1 * time.Second):
-		assert.Fail(t, "Stop() did not close the stop channel")
+		t.Error("Stop() did not close the stop channel")
 	}
 
 	// Test that you can call Stop more than once. Without the isStopping guard,
@@ -107,17 +121,22 @@ func TestGroupStop(t *testing.T) {
 
 func TestGroupStopChannel(t *testing.T) {
 	sg := NewGroup()
-	assert.Exactly(t, sg.stop, sg.StopChannel())
+	if sg.stop != sg.StopChannel() {
+		t.Errorf("sg.stop = %#v; expected %#v", sg.stop, sg.StopChannel())
+	}
 }
 
 func TestGroupStopOnSignal(t *testing.T) {
 	sg := NewGroup()
 	sg.StopOnSignal(syscall.SIGWINCH)
-	syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)
+	err := syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)
+	if err != nil {
+		t.Error(err)
+	}
 	select {
 	case <-sg.stop:
 	case <-time.After(1 * time.Second):
-		assert.Fail(t, "Signal did not close stop channel")
+		t.Error("Signal did not close stop channel")
 	}
 }
 
@@ -133,6 +152,6 @@ func TestGroupWait(t *testing.T) {
 	select {
 	case <-ch:
 	case <-time.After(1 * time.Second):
-		assert.Fail(t, "sg.Wait() didn't complete")
+		t.Error("sg.Wait() didn't complete")
 	}
 }

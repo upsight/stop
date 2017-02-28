@@ -3,67 +3,99 @@ package stop
 import (
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewChannelStopper(t *testing.T) {
 	s := NewChannelStopper()
-	if assert.NotNil(t, s) {
-		assert.NotNil(t, s.stop)
-		assert.NotNil(t, s.stopped)
-		assert.False(t, s.isStopped)
-		assert.False(t, s.isStopping)
+	if s == nil {
+		t.Fatal("s is nil")
+	}
+	if s.stop == nil {
+		t.Errorf("s.stop = nil")
+	}
+	if s.stopped == nil {
+		t.Errorf("s.stopped = nil")
+	}
+	if s.isStopped {
+		t.Error("s.isStopped = true, expected false")
+	}
+	if s.isStopping {
+		t.Error("s.isStopping = true, expected false")
 	}
 }
 
 func TestChannelStopperIsStopped(t *testing.T) {
 	s := NewChannelStopper()
-	assert.False(t, s.IsStopped())
+	if s.IsStopped() {
+		t.Error("s.IsStopped() = true, expected false")
+	}
+
 	s.isStopped = true
-	assert.True(t, s.IsStopped())
+	if !s.IsStopped() {
+		t.Error("s.IsStopped() = false, expected true")
+	}
 }
 
 func TestChannelStopperIsStopping(t *testing.T) {
 	s := NewChannelStopper()
-	assert.False(t, s.IsStopping())
+	if s.IsStopping() {
+		t.Error("s.IsStopping() = true, expected false")
+	}
+
 	s.isStopping = true
-	assert.True(t, s.IsStopping())
+	if !s.IsStopping() {
+		t.Error("s.IsStopping() = false, expected true")
+	}
 }
 
 func TestChannelStopperStop(t *testing.T) {
 	s := NewChannelStopper()
-	assert.False(t, s.isStopping)
+	if s.isStopping {
+		t.Error("s.isStopping = true, expected false")
+	}
+
 	s.Stop()
-	assert.True(t, s.isStopping)
+	if !s.isStopping {
+		t.Error("s.isStopping = false, expected true")
+	}
 	select {
 	case <-s.stop:
 	case <-time.After(1 * time.Second):
-		assert.Fail(t, "Stop() did not close stop channel")
+		t.Error("Stop() did not close stop channel")
 	}
 
 }
 
 func TestChannelStopperStopChannel(t *testing.T) {
 	s := NewChannelStopper()
-	assert.Exactly(t, s.stop, s.StopChannel())
+	if s.StopChannel() != s.stop {
+		t.Errorf("s.StopChannel() = %#v, expected %#v", s.StopChannel(), s.stop)
+	}
 }
 
 func TestChannelStopperStopped(t *testing.T) {
 	s := NewChannelStopper()
-	assert.False(t, s.isStopped)
+	if s.isStopped {
+		t.Errorf("s.isStopped is true, expected false")
+	}
+
 	s.Stopped()
-	assert.True(t, s.isStopped)
+	if !s.isStopped {
+		t.Errorf("s.isStopped is false, expected true")
+	}
+
 	select {
 	case <-s.stopped:
 	case <-time.After(1 * time.Second):
-		assert.Fail(t, "Stopped() did not close stopped channel")
+		t.Error("Stopped() did not close stopped channel")
 	}
 }
 
 func TestChannelStopperStoppedChannel(t *testing.T) {
 	s := NewChannelStopper()
-	assert.Exactly(t, s.stopped, s.StoppedChannel())
+	if s.StoppedChannel() != s.stopped {
+		t.Errorf("s.StoppedChannel() = %#v, expected %#v", s.StoppedChannel(), s.stopped)
+	}
 }
 
 func TestChannelStopperWaitForStopped(t *testing.T) {
@@ -77,6 +109,6 @@ func TestChannelStopperWaitForStopped(t *testing.T) {
 	select {
 	case <-ch:
 	case <-time.After(1 * time.Second):
-		assert.Fail(t, "WaitForStopped() didn't return")
+		t.Error("WaitForStopped() didn't return")
 	}
 }
